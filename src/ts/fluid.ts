@@ -1,11 +1,11 @@
 import GLResource from "./gl-utils/gl-resource";
 import Shader from "./gl-utils/shader";
-import VBO from "./gl-utils/vbo";
 import FBO from "./gl-utils/fbo";
 import ObstacleMap from "./obstacle-map";
-import obstacleMap from "./obstacle-map";
-import * as Controls from "./controls";
+import * as Parameters from "./parameters";
 import * as FluidShaders from "./shaders/fluid-shaders";
+
+declare const Canvas: any;
 
 class Fluid extends GLResource {
   private _width: number;
@@ -55,7 +55,7 @@ class Fluid extends GLResource {
   }
 
   private freeTextures(): void {
-    const gl = super.gl;
+    const gl = super.gl();
 
     if (this._velTextures) {
       gl.deleteTexture(this._velTextures[0]);
@@ -90,7 +90,7 @@ class Fluid extends GLResource {
     this._height = height;
     this.dx = 1 / Math.min(width, height);
 
-    this._FBO = new FBO(super.gl, width, height);
+    this._FBO = new FBO(super.gl(), width, height);
 
     this.initTextures();
     this.buildShaders();
@@ -118,21 +118,21 @@ class Fluid extends GLResource {
   }
 
   public update(obstacleMap: ObstacleMap): void {
+    const gl = super.gl();
     const dt = this.timestep;
 
-    super.gl.clearColor(0.5, 0, 0.5, 0);
+    gl.clearColor(0.5, 0, 0.5, 0);
 
-    if (Controls.mouse.pressed) {
-      const gl = super.gl;
+    if (Canvas.isMouseDown()) {
       const canvasSize = [gl.canvas.clientWidth, gl.canvas.clientHeight];
       const brushSize = [
-        Controls.brush.radius / canvasSize[0],
-        Controls.brush.radius / canvasSize[1]
+        Parameters.brush.radius / canvasSize[0],
+        Parameters.brush.radius / canvasSize[1]
       ];
-      const pos = Controls.mouse.pos;
+      const pos = Parameters.mouse.pos;
       const vel = [
-        Controls.mouse.movement[0] * Controls.brush.strength,
-        Controls.mouse.movement[1] * Controls.brush.strength,
+        Parameters.mouse.movement[0] * Parameters.brush.strength,
+        Parameters.mouse.movement[1] * Parameters.brush.strength,
       ];
       this.addVel(pos, brushSize, vel);
     }
@@ -147,7 +147,7 @@ class Fluid extends GLResource {
   }
 
   public addVel(pos: number[], size: number[], vel: number[]): void {
-    const gl = this.gl;
+    const gl = this.gl();
     const addVelShader = this._addVelShader;
     addVelShader.u["uVel"].value = this._velTextures[this.currIndex];
     addVelShader.u["uBrushPos"].value = pos;
@@ -164,7 +164,7 @@ class Fluid extends GLResource {
   }
 
   public drawVelocity(): void {
-    const gl = this.gl;
+    const gl = this.gl();
     const drawShader = this._drawVelocityShader;
     drawShader.u["uVel"].value = this._velTextures[this.currIndex];
     drawShader.u["uColorIntensity"].value = this.colorIntensity;
@@ -176,7 +176,7 @@ class Fluid extends GLResource {
   }
 
   public drawPressure(): void {
-    const gl = this.gl;
+    const gl = this.gl();
     const drawPressureShader = this._drawPressureShader;
     drawPressureShader.u["uPressure"].value = this._pressureTexture;
     drawPressureShader.u["uColorIntensity"].value = this.colorIntensity;
@@ -200,7 +200,7 @@ class Fluid extends GLResource {
   }
 
   private obstaclesVelocity(obstacleMap: ObstacleMap): void {
-    const gl = this.gl;
+    const gl = this.gl();
     const obstacleVelocityShader = this._obstaclesVelocityShader;
 
     obstacleVelocityShader.u["uVelocities"].value = this._velTextures[this.currIndex];
@@ -217,7 +217,7 @@ class Fluid extends GLResource {
   }
 
   private advect(dt: number): void {
-    const gl = this.gl;
+    const gl = this.gl();
     const advectShader = this._advectShader;
 
     advectShader.u["uVelUnit"].value = [128 / this._width, 128 / this._height];
@@ -235,7 +235,7 @@ class Fluid extends GLResource {
   }
 
   private computeDivergence(): void {
-    const gl = this.gl;
+    const gl = this.gl();
     const divergenceShader = this._divergenceShader
 
     divergenceShader.u["uTexelSize"].value = this.texelSize;
@@ -250,7 +250,7 @@ class Fluid extends GLResource {
   }
 
   private computePressure(obstacleMap: ObstacleMap): void {
-    const gl = this.gl;
+    const gl = this.gl();
     const jacobiPressureShader = this._jacobiPressureShader
     const alpha = -.5 * this.dx;
     const beta = 4;
@@ -282,7 +282,7 @@ class Fluid extends GLResource {
   }
 
   private substractPressureGradient(): void {
-    const gl = this.gl;
+    const gl = this.gl();
     const substractGradientShader = this._substractGradientShader;
     substractGradientShader.u["uVelocities"].value = this._velTextures[this.currIndex];
     substractGradientShader.u["uPressure"].value = this._pressureTexture;
@@ -305,7 +305,7 @@ class Fluid extends GLResource {
 
   private initTextures(): void {
     this.freeTextures();
-    const gl = super.gl;
+    const gl = super.gl();
     const width = this._width;
     const height = this._height;
 
@@ -359,7 +359,7 @@ class Fluid extends GLResource {
   private buildShaders(): void {
     this.freeShaders();
     FluidShaders.setUseFloatTextures(this._useFloatTextures);
-    const gl = super.gl;
+    const gl = super.gl();
 
     this._drawVelocityShader = FluidShaders.buildDrawVelocityShader(gl);
     this._drawPressureShader = FluidShaders.buildDrawPressureShader(gl);

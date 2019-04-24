@@ -1,22 +1,28 @@
 import * as Utils from "./gl-utils/utils";
 import FBO from "./gl-utils/fbo";
-import * as Controls from "./controls";
+import * as Parameters from "./parameters";
 import Brush from "./brush";
 import ObstacleMap from "./obstacle-map";
 import Fluid from "./fluid";
-import obstacleMap from "./obstacle-map";
 import * as Requirements from "./requirements";
+
+declare const Canvas: any;
+declare const Demopage: any;
 
 /** Initializes a WebGL context */
 function initGL(canvas: HTMLCanvasElement, flags: any): WebGLRenderingContext {
+    function setError(message: string) {
+        Demopage.setErrorMessage("webgl-support", message);
+    }
+
     let gl: WebGLRenderingContext = canvas.getContext("webgl", flags) as WebGLRenderingContext;
     if (!gl) {
         gl = canvas.getContext("experimental-webgl", flags);
         if (!gl) {
-            alert("Your browser or device does not seem to support WebGL.");
+            setError("Your browser or device does not seem to support WebGL.");
             return null;
         }
-        alert("Your browser or device only supports experimental WebGL.\n" +
+        setError("Your browser or device only supports experimental WebGL.\n" +
             "The simulation may not run as expected.");
     }
 
@@ -34,7 +40,7 @@ function initGL(canvas: HTMLCanvasElement, flags: any): WebGLRenderingContext {
 }
 
 function main() {
-    const canvas: HTMLCanvasElement = document.getElementById("glcanvas") as HTMLCanvasElement;
+    const canvas: HTMLCanvasElement = Canvas.getCanvas();
     const gl: WebGLRenderingContext = initGL(canvas, { alpha: false });
     if (!gl || !Requirements.check(gl))
         return;
@@ -68,18 +74,17 @@ function main() {
         }
     }
 
-    Controls.bind(canvas, fluid);
+    Parameters.bind(fluid);
 
     /* Update the FPS indicator every second. */
     let instantFPS: number = 0;
-    const fpsText = document.getElementById("fps-text");
     const updateFpsText = function () {
-        fpsText.textContent = instantFPS.toFixed(0);
+        Canvas.setIndicatorText("fps", instantFPS.toFixed(0));
     };
     setInterval(updateFpsText, 1000);
 
     let lastUpdate = 0;
-    function mainLoop(time) {
+    function mainLoop(time: number) {
         time *= 0.001; //dt is now in seconds
         let dt = time - lastUpdate;
         instantFPS = 1 / dt;
@@ -89,10 +94,10 @@ function main() {
          * In that case we adjust it so the simulation resumes correctly. */
         dt = Math.min(dt, 1 / 10);
 
-        const obstacleMap: ObstacleMap = obstacleMaps[Controls.obstacles];
+        const obstacleMap: ObstacleMap = obstacleMaps[Parameters.obstacles];
 
         /* Updating */
-        if (Controls.fluid.stream) {
+        if (Parameters.fluid.stream) {
             fluid.addVel([0.1, 0.5], [0.05, 0.2], [0.4, 0]);
         }
         fluid.update(obstacleMap);
@@ -101,21 +106,21 @@ function main() {
         FBO.bindDefault(gl);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        if (Controls.display.velocity) {
+        if (Parameters.display.velocity) {
             fluid.drawVelocity();
-        } else if (Controls.display.pressure) {
+        } else if (Parameters.display.pressure) {
             fluid.drawPressure();
         }
 
-        if (Controls.display.brush) {
+        if (Parameters.display.brush) {
             brush.draw();
         }
 
-        if (Controls.display.obstacles) {
+        if (Parameters.display.obstacles) {
             obstacleMap.draw();
         }
 
-        if (Controls.display.velocity && Controls.display.pressure) {
+        if (Parameters.display.velocity && Parameters.display.pressure) {
             gl.viewport(10, 10, 128, 128);
             fluid.drawPressure();
         }

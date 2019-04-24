@@ -1,6 +1,5 @@
 import GLResource from "./gl-utils/gl-resource";
 import Shader from "./gl-utils/shader";
-import VBO from "./gl-utils/vbo";
 import FBO from "./gl-utils/fbo";
 import * as ObstacleMapShaders from "./shaders/obstacle-map-shaders";
 
@@ -30,7 +29,7 @@ class ObstacleMap extends GLResource {
   }
 
   public freeGLResources(): void {
-    const gl = super.gl;
+    const gl = super.gl();
 
     this._fbo.freeGLResources();
     this._fbo = null;
@@ -49,7 +48,7 @@ class ObstacleMap extends GLResource {
   }
 
   public draw(): void {
-    const gl = super.gl;
+    const gl = super.gl();
     const drawShader = this._drawShader;
 
     drawShader.u["uObstacles"].value = this.texture;
@@ -59,7 +58,7 @@ class ObstacleMap extends GLResource {
   }
 
   public addObstacle(pos, size): void {
-    const gl = super.gl;
+    const gl = super.gl();
     const addShader = this._addShader;
     addShader.u["uSize"].value = pos;
     addShader.u["uPos"].value = size;
@@ -71,7 +70,7 @@ class ObstacleMap extends GLResource {
   }
 
   private initObstaclesMap(): void {
-    const gl = super.gl;
+    const gl = super.gl();
     const width = this._width;
     const height = this._height;
 

@@ -1,7 +1,6 @@
 import GLResource from "./gl-utils/gl-resource";
 import Shader from "./gl-utils/shader";
-import VBO from "./gl-utils/vbo";
-import * as Controls from "./controls";
+import * as Parameters from "./parameters";
 import * as BrushShaders from "./shaders/brush-shaders";
 
 class Brush extends GLResource {
@@ -21,18 +20,18 @@ class Brush extends GLResource {
     }
 
     public draw(): void {
-        const gl = super.gl;
+        const gl = super.gl();
         const canvasSize = [gl.canvas.clientWidth, gl.canvas.clientHeight];
         const drawShader = this._drawShader;
         drawShader.use();
 
         const brushSize = [
-            Controls.brush.radius / canvasSize[0],
-            Controls.brush.radius / canvasSize[1]
+            Parameters.brush.radius / canvasSize[0],
+            Parameters.brush.radius / canvasSize[1]
         ];
         drawShader.u["uBrushSize"].value = brushSize;
-        drawShader.u["uBrushPos"].value = Controls.mouse.pos;
-        drawShader.u["uThickness"].value = this.thickness / Controls.brush.radius;
+        drawShader.u["uBrushPos"].value = Parameters.mouse.pos;
+        drawShader.u["uThickness"].value = this.thickness / Parameters.brush.radius;
         drawShader.bindUniformsAndAttributes();
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

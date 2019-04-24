@@ -15,7 +15,7 @@ class FBO extends GLResource {
     }
 
     public bind(colorBuffers: WebGLTexture[], depthBuffer: WebGLRenderbuffer = null): void {
-        const gl = super.gl;
+        const gl = super.gl();
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.id);
         gl.viewport(0, 0, this.width, this.height);
@@ -38,7 +38,7 @@ class FBO extends GLResource {
     }
 
     public freeGLResources(): void {
-        super.gl.deleteFramebuffer(this.id);
+        super.gl().deleteFramebuffer(this.id);
         this.id = null;
     }
 }

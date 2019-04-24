@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="Stable fluid simulation running on GPU" />
+    <title>Navier-Stokes</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96">
+    <link rel="stylesheet" type="text/css" href="css/page.css">
+  </head>
+
+  <body>
+    <header>
+      <a class="logo" href="https://piellardj.github.io"></a>
+    </header>
+
+    <main>
+      <div class="intro">
+        <h1>Navier-Stokes</h1>
+
+        <div class="description">
+          <p>This project is a WebGL incompressible fluid simulation running entirely on your GPU. You can interact with the fluid with the left mouse button and visualize both the velocity and the pressure of the fluid.</p>
+          <p>This is an implementation of the Stable Fluid described by J. Stam.</p>
+
+          <br>
+
+          <a href="https://github.com/piellardj/navier-stokes-webgl">More on GitHub</a>
+        </div>
+      </div>
+
+      <div id="error-messages">
+        <noscript>
+          You need to enable Javascript to run this experiment.
+        </noscript>
+      </div>
+
+      <input type="checkbox" id="fullscreen-checkbox-id" class="hidden">
+      <div class="demo">
+        <input type="checkbox" id="side-pane-checkbox-id" class="hidden">
+        <div id="canvas-container">
+          <canvas id="canvas"></canvas>
+          <div class="loader">
+            <span></span>
+            <div class="loader-animation"></div>
+          </div>
+          <div id="indicators">
+            <div id="fps-indicator-id">
+              FPS: <span></span>
+            </div>
+          </div>
+          <div id="canvas-buttons-column" class="hidden">
+            <label class="canvas-button" id="fullscreen-toggle-id" for="fullscreen-checkbox-id"></label>
+            <label class="canvas-button" id="side-pane-toggle-id" for="side-pane-checkbox-id"></label>
+          </div>
+        </div>
+        <div class="controls-block">
+          <label class="canvas-button" id="side-pane-close-toggle-id" for="side-pane-checkbox-id">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+              <line x1="22" y1="22" x2="10" y2="10" stroke-linecap="round" stroke-width="2" />
+              <line x1="22" y1="10" x2="10" y2="22" stroke-linecap="round" stroke-width="2" />
+            </svg>
+          </label>
+
+          <section class="controls-section">
+            <h2>Simulation</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-resolution">
+                <label>Resolution:</label>
+                <div class="tabs compact" id="resolution-id">
+                  <input type="radio" name="resolution" value="128" id="resolution-128-id" />
+                  <label for="resolution-128-id">128</label>
+                  <input type="radio" name="resolution" value="256" id="resolution-256-id" checked />
+                  <label for="resolution-256-id">256</label>
+                  <input type="radio" name="resolution" value="512" id="resolution-512-id" />
+                  <label for="resolution-512-id">512</label>
+                </div>
+              </div>
+              <div class="control" id="control-float-texture-checkbox-id">
+                <label>Float texture:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="float-texture-checkbox-id" checked>
+                  <label for="float-texture-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-solver-steps-range-id">
+                <label>Solver steps:</label>
+                <div class="range">
+                  <input type="range" min="1" max="99" value="49" step="2" class="slider" id="solver-steps-range-id">
+                  <span class="tooltip"></span>
+                </div>
+              </div>
+              <div class="control" id="control-timestep-range-id">
+                <label>Time step:</label>
+                <div class="range">
+                  <input type="range" min="0.01" max="0.1" value="0.033" step="0.001" class="slider" id="timestep-range-id">
+                  <span class="tooltip"></span>
+                </div>
+              </div>
+              <div class="control" id="control-stream-checkbox-id">
+                <label>Stream:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="stream-checkbox-id" checked>
+                  <label for="stream-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-obstacles">
+                <label>Obstacles:</label>
+                <div class="tabs compact" id="obstacles-id">
+                  <input type="radio" name="obstacles" value="none" id="obstacles-none-id" />
+                  <label for="obstacles-none-id">None</label>
+                  <input type="radio" name="obstacles" value="one" id="obstacles-one-id" />
+                  <label for="obstacles-one-id">One</label>
+                  <input type="radio" name="obstacles" value="many" id="obstacles-many-id" checked />
+                  <label for="obstacles-many-id">Many</label>
+                </div>
+              </div>
+            </div>
+          </section>
+          <hr />
+
+          <section class="controls-section">
+            <h2>Brush</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-brush-radius-range-id">
+                <label>Radius:</label>
+                <div class="range">
+                  <input type="range" min="20" max="100" value="40" step="1" class="slider" id="brush-radius-range-id">
+                  <span class="tooltip"></span>
+                </div>
+              </div>
+              <div class="control" id="control-brush-strength-range-id">
+                <label>Strength:</label>
+                <div class="range">
+                  <input type="range" min="20" max="200" value="100" step="1" class="slider" id="brush-strength-range-id">
+                  <span class="tooltip"></span>
+                </div>
+              </div>
+            </div>
+          </section>
+          <hr />
+
+          <section class="controls-section">
+            <h2>Display</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-displayed-fields">
+                <label>Fields:</label>
+                <div class="tabs compact" id="displayed-fields-id">
+                  <input type="checkbox" value="velocity" id="displayed-fields-velocity-id" checked />
+                  <label for="displayed-fields-velocity-id">Velocity</label>
+                  <input type="checkbox" value="pressure" id="displayed-fields-pressure-id" />
+                  <label for="displayed-fields-pressure-id">Pressure</label>
+                </div>
+              </div>
+              <div class="control" id="control-intensity-range-id">
+                <label>Intensity:</label>
+                <div class="range">
+                  <input type="range" min="0.1" max="10" value="1" step="0.1" class="slider" id="intensity-range-id">
+                  <span class="tooltip"></span>
+                </div>
+              </div>
+              <div class="control" id="control-display-color-checkbox-id">
+                <label>Color:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="display-color-checkbox-id" checked>
+                  <label for="display-color-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-display-obstacles-checkbox-id">
+                <label>Obstacles:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="display-obstacles-checkbox-id" checked>
+                  <label for="display-obstacles-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="badge-shelf">
+        <a class="badge" href="mailto:jeremie.piellard@gmail.com" title="Mail">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 512 512">
+            <path d="M512 85V448H0V85l256 224L512 85zM488 64H24L256 267 488 64z" />
+          </svg>
+        </a>
+
+        <a class="badge" href="https://github.com/piellardj" title="GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 1024 1024">
+            <path d="M512 0C229 0 0 229 0 512c0 226 147 418 350 486 26 5 35-11 35-25 0-12 0-53-1-95C242 909 212 818 212 818c-23-59-57-75-57-75-47-32 4-31 4-31 51 4 78 53 78 53 46 78 120 56 149 43 5-33 18-56 33-68C305 725 185 682 185 485c0-56 20-102 53-137-5-13-23-65 5-136 0 0 43-14 141 53 41-11 85-17 128-17 44 0 87 6 128 17 98-66 141-52 141-52 28 71 10 123 5 136 33 36 53 81 53 137 0 197-120 240-234 253 18 16 35 47 35 95 0 68-1 124-1 141 0 14 9 30 35 25C877 930 1024 738 1024 512 1024 229 795 0 512 0z" />
+          </svg>
+        </a>
+
+        <a class="badge" href="https://www.linkedin.com/in/jeremie-piellard/" title="LinkedIn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 512 512">
+            <path d="M30 177l93-1v304l-93 1v-304z" />
+            <path d="M200 177l89-1v39l0 11c26-26 53-45 97-45 51 0 100 21 100 91v208l-90 1v-159c0-35-9-58-51-58-37 0-52 7-52 55v160l-92 1v-304z" />
+            <path d="M128 81c0 28-23 51-51 51s-51-23-51-51c0-28 23-51 51-51 28 0 51 23 51 51z" />
+          </svg>
+        </a>
+      </div>
+    </footer>
+    <script src="script/page.min.js"></script>
+    <script src="script/main.js"></script>
+  </body>
+
+</html>
