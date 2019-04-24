@@ -1328,10 +1328,14 @@ function bindControls(fluid) {
         updateObstacles(Tabs.getValues(OBSTACLES_CONTROL_ID));
     }
     {
-        var BRUSH_RADIUS_CONTROL_ID = "brush-radius-range-id";
-        var updateBrushRadius = function (radius) { brushInfo.radius = radius; };
-        Range.addObserver(BRUSH_RADIUS_CONTROL_ID, updateBrushRadius);
-        updateBrushRadius(Range.getValue(BRUSH_RADIUS_CONTROL_ID));
+        var BRUSH_RADIUS_CONTROL_ID_1 = "brush-radius-range-id";
+        var updateBrushRadius_1 = function (radius) { brushInfo.radius = radius; };
+        Range.addObserver(BRUSH_RADIUS_CONTROL_ID_1, updateBrushRadius_1);
+        updateBrushRadius_1(Range.getValue(BRUSH_RADIUS_CONTROL_ID_1));
+        Canvas.Observers.mouseWheel.push(function (delta) {
+            Range.setValue(BRUSH_RADIUS_CONTROL_ID_1, brushInfo.radius + 5 * delta);
+            updateBrushRadius_1(Range.getValue(BRUSH_RADIUS_CONTROL_ID_1));
+        });
     }
     {
         var BRUSH_STRENGTH_CONTROL_ID = "brush-strength-range-id";

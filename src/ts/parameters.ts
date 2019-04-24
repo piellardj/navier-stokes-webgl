@@ -179,6 +179,11 @@ function bindControls(fluid: Fluid): void {
         const updateBrushRadius = (radius: number) => { brushInfo.radius = radius; };
         Range.addObserver(BRUSH_RADIUS_CONTROL_ID, updateBrushRadius);
         updateBrushRadius(Range.getValue(BRUSH_RADIUS_CONTROL_ID));
+
+        Canvas.Observers.mouseWheel.push((delta: number) => {
+            Range.setValue(BRUSH_RADIUS_CONTROL_ID, brushInfo.radius + 5 * delta);
+            updateBrushRadius(Range.getValue(BRUSH_RADIUS_CONTROL_ID));
+        });
     }
     {
         const BRUSH_STRENGTH_CONTROL_ID = "brush-strength-range-id";
