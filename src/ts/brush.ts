@@ -21,7 +21,8 @@ class Brush extends GLResource {
 
     public draw(): void {
         const gl = super.gl();
-        const canvasSize = [gl.canvas.clientWidth, gl.canvas.clientHeight];
+        const canvas = gl.canvas as HTMLCanvasElement;
+        const canvasSize = [canvas.clientWidth, canvas.clientHeight];
         const drawShader = this._drawShader;
         drawShader.use();
 

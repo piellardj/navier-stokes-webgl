@@ -1,11 +1,7 @@
 import Fluid from "./fluid";
 import * as Requirements from "./requirements";
 
-declare const Canvas: any;
-declare const Checkbox: any;
-declare const Controls: any;
-declare const Range: any;
-declare const Tabs: any;
+import "./page-interface-generated";
 
 class Mouse {
     private _posInPx: number[];
@@ -22,12 +18,12 @@ class Mouse {
         this.setPosInPx([0, 0]);
         this.setMovementInPx([0, 0]);
 
-        Canvas.Observers.mouseMove.push((relX: number, relY: number) => {
-            const canvasSize = Canvas.getSize();
+        Page.Canvas.Observers.mouseMove.push((relX: number, relY: number) => {
+            const canvasSize = Page.Canvas.getSize();
             this.setPosInPx([canvasSize[0] * relX, canvasSize[1] * (1 - relY)]);
         });
 
-        Canvas.Observers.mouseDown.push((relX: number, relY: number) => {
+        Page.Canvas.Observers.mouseDown.push(() => {
             this.setMovementInPx([0, 0]);
             this._pivotInPx = this._posInPx;
         });
@@ -76,7 +72,7 @@ class Mouse {
     }
 
     private setRelative(pos: number[]): number[] {
-        const canvasSize = Canvas.getSize();
+        const canvasSize = Page.Canvas.getSize();
         return [
             pos[0] / canvasSize[0],
             pos[1] / canvasSize[1],
@@ -133,36 +129,36 @@ function bindControls(fluid: Fluid): void {
             const size: number = +values[0];
             fluid.reset(size, size);
         };
-        Tabs.addObserver(RESOLUTIONS_CONTROL_ID, updateResolution);
-        updateResolution(Tabs.getValues(RESOLUTIONS_CONTROL_ID));
+        Page.Tabs.addObserver(RESOLUTIONS_CONTROL_ID, updateResolution);
+        updateResolution(Page.Tabs.getValues(RESOLUTIONS_CONTROL_ID));
     }
     {
         const FLOAT_CONTROL_ID = "float-texture-checkbox-id";
         if (!Requirements.allExtensionsLoaded) {
-            Controls.setVisibility(FLOAT_CONTROL_ID, false);
-            Checkbox.setChecked(FLOAT_CONTROL_ID, false);
+            Page.Controls.setVisibility(FLOAT_CONTROL_ID, false);
+            Page.Checkbox.setChecked(FLOAT_CONTROL_ID, false);
         }
         const updateFloat = (use: boolean) => { fluid.useFloatTextures = use; };
-        Checkbox.addObserver(FLOAT_CONTROL_ID, updateFloat);
-        updateFloat(Checkbox.isChecked(FLOAT_CONTROL_ID));
+        Page.Checkbox.addObserver(FLOAT_CONTROL_ID, updateFloat);
+        updateFloat(Page.Checkbox.isChecked(FLOAT_CONTROL_ID));
     }
     {
         const ITERATIONS_CONTROL_ID = "solver-steps-range-id";
         const updateIterations = (iterations: number) => { fluid.minNbIterations = iterations; };
-        Range.addObserver(ITERATIONS_CONTROL_ID, updateIterations);
-        updateIterations(Range.getValue(ITERATIONS_CONTROL_ID));
+        Page.Range.addObserver(ITERATIONS_CONTROL_ID, updateIterations);
+        updateIterations(Page.Range.getValue(ITERATIONS_CONTROL_ID));
     }
     {
         const TIMESTEP_CONTROL_ID = "timestep-range-id";
         const updateTimestep = (timestep: number) => { fluid.timestep = timestep; };
-        Range.addObserver(TIMESTEP_CONTROL_ID, updateTimestep);
-        updateTimestep(Range.getValue(TIMESTEP_CONTROL_ID));
+        Page.Range.addObserver(TIMESTEP_CONTROL_ID, updateTimestep);
+        updateTimestep(Page.Range.getValue(TIMESTEP_CONTROL_ID));
     }
     {
         const STREAM_CONTROL_ID = "stream-checkbox-id";
         const updateStream = (doStream: boolean) => { fluidInfo.stream = doStream; };
-        Checkbox.addObserver(STREAM_CONTROL_ID, updateStream);
-        updateStream(Checkbox.isChecked(STREAM_CONTROL_ID));
+        Page.Checkbox.addObserver(STREAM_CONTROL_ID, updateStream);
+        updateStream(Page.Checkbox.isChecked(STREAM_CONTROL_ID));
     }
     {
         const OBSTACLES_CONTROL_ID = "obstacles";
@@ -170,26 +166,26 @@ function bindControls(fluid: Fluid): void {
             obstaclesInfo = values[0] as ObstaclesInfo;
 
         };
-        Tabs.addObserver(OBSTACLES_CONTROL_ID, updateObstacles);
-        updateObstacles(Tabs.getValues(OBSTACLES_CONTROL_ID));
+        Page.Tabs.addObserver(OBSTACLES_CONTROL_ID, updateObstacles);
+        updateObstacles(Page.Tabs.getValues(OBSTACLES_CONTROL_ID));
     }
 
     {
         const BRUSH_RADIUS_CONTROL_ID = "brush-radius-range-id";
         const updateBrushRadius = (radius: number) => { brushInfo.radius = radius; };
-        Range.addObserver(BRUSH_RADIUS_CONTROL_ID, updateBrushRadius);
-        updateBrushRadius(Range.getValue(BRUSH_RADIUS_CONTROL_ID));
+        Page.Range.addObserver(BRUSH_RADIUS_CONTROL_ID, updateBrushRadius);
+        updateBrushRadius(Page.Range.getValue(BRUSH_RADIUS_CONTROL_ID));
 
-        Canvas.Observers.mouseWheel.push((delta: number) => {
-            Range.setValue(BRUSH_RADIUS_CONTROL_ID, brushInfo.radius + 5 * delta);
-            updateBrushRadius(Range.getValue(BRUSH_RADIUS_CONTROL_ID));
+        Page.Canvas.Observers.mouseWheel.push((delta: number) => {
+            Page.Range.setValue(BRUSH_RADIUS_CONTROL_ID, brushInfo.radius + 5 * delta);
+            updateBrushRadius(Page.Range.getValue(BRUSH_RADIUS_CONTROL_ID));
         });
     }
     {
         const BRUSH_STRENGTH_CONTROL_ID = "brush-strength-range-id";
         const updateBrushStrength = (strength: number) => { brushInfo.strength = strength; };
-        Range.addObserver(BRUSH_STRENGTH_CONTROL_ID, updateBrushStrength);
-        updateBrushStrength(Range.getValue(BRUSH_STRENGTH_CONTROL_ID));
+        Page.Range.addObserver(BRUSH_STRENGTH_CONTROL_ID, updateBrushStrength);
+        updateBrushStrength(Page.Range.getValue(BRUSH_STRENGTH_CONTROL_ID));
     }
 
     {
@@ -198,26 +194,26 @@ function bindControls(fluid: Fluid): void {
             displayInfo.velocity = modes[0] === "velocity" || modes[1] === "velocity";
             displayInfo.pressure = modes[0] === "pressure" || modes[1] === "pressure";
         };
-        Tabs.addObserver(DISPLAY_MODE_CONTROL_ID, updateDisplayMode);
-        updateDisplayMode(Tabs.getValues(DISPLAY_MODE_CONTROL_ID));
+        Page.Tabs.addObserver(DISPLAY_MODE_CONTROL_ID, updateDisplayMode);
+        updateDisplayMode(Page.Tabs.getValues(DISPLAY_MODE_CONTROL_ID));
     }
     {
         const COLOR_INTENSITY_CONTROL_ID = "intensity-range-id";
         const updateColorIntensity = (intensity: number) => { fluid.colorIntensity = intensity; };
-        Range.addObserver(COLOR_INTENSITY_CONTROL_ID, updateColorIntensity);
-        updateColorIntensity(Range.getValue(COLOR_INTENSITY_CONTROL_ID));
+        Page.Range.addObserver(COLOR_INTENSITY_CONTROL_ID, updateColorIntensity);
+        updateColorIntensity(Page.Range.getValue(COLOR_INTENSITY_CONTROL_ID));
     }
     {
         const DISPLAY_COLOR_CONTROL_ID = "display-color-checkbox-id";
         const updateColor = (display: boolean) => { fluid.color = display; };
-        Checkbox.addObserver(DISPLAY_COLOR_CONTROL_ID, updateColor);
-        updateColor(Checkbox.isChecked(DISPLAY_COLOR_CONTROL_ID));
+        Page.Checkbox.addObserver(DISPLAY_COLOR_CONTROL_ID, updateColor);
+        updateColor(Page.Checkbox.isChecked(DISPLAY_COLOR_CONTROL_ID));
     }
     {
         const DISPLAY_OBSTACLES_CONTROL_ID = "display-obstacles-checkbox-id";
         const updateDisplayObstacles = (display: boolean) => { displayInfo.obstacles = display; };
-        Checkbox.addObserver(DISPLAY_OBSTACLES_CONTROL_ID, updateDisplayObstacles);
-        updateDisplayObstacles(Checkbox.isChecked(DISPLAY_OBSTACLES_CONTROL_ID));
+        Page.Checkbox.addObserver(DISPLAY_OBSTACLES_CONTROL_ID, updateDisplayObstacles);
+        updateDisplayObstacles(Page.Checkbox.isChecked(DISPLAY_OBSTACLES_CONTROL_ID));
     }
 }
 

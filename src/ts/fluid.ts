@@ -5,7 +5,7 @@ import ObstacleMap from "./obstacle-map";
 import * as Parameters from "./parameters";
 import * as FluidShaders from "./shaders/fluid-shaders";
 
-declare const Canvas: any;
+import "./page-interface-generated";
 
 class Fluid extends GLResource {
   private _width: number;
@@ -123,8 +123,9 @@ class Fluid extends GLResource {
 
     gl.clearColor(0.5, 0, 0.5, 0);
 
-    if (Canvas.isMouseDown()) {
-      const canvasSize = [gl.canvas.clientWidth, gl.canvas.clientHeight];
+    if (Page.Canvas.isMouseDown()) {
+      const canvas = gl.canvas as HTMLCanvasElement;
+      const canvasSize = [canvas.clientWidth, canvas.clientHeight];
       const brushSize = [
         Parameters.brush.radius / canvasSize[0],
         Parameters.brush.radius / canvasSize[1]
