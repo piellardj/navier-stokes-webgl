@@ -326,7 +326,7 @@ var Page;
                     }
                 }
                 var nbObservers = mouseMoveObservers.length + mouseDragObservers.length;
-                if (isMouseDown && nbObservers > 0) {
+                if (Mouse.isMouseDown() && nbObservers > 0) {
                     event.preventDefault();
                 }
                 if (currentTouches.length === 1) {
