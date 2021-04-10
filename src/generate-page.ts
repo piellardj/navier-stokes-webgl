@@ -12,7 +12,7 @@ const data = {
     githubProjectName: "navier-stokes-webgl",
     additionalLinks: [],
     scriptFiles: [
-        "script/main.js"
+        "script/main.min.js"
     ],
     indicators: [
         {

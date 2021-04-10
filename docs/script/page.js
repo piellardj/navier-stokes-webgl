@@ -47,6 +47,650 @@ var Page;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 var Page;
 (function (Page) {
+    var Helpers;
+    (function (Helpers) {
+        var URL;
+        (function (URL) {
+            var PARAMETERS_PREFIX = "page";
+            var URLBuilder = /** @class */ (function () {
+                function URLBuilder(url) {
+                    this.queryParameters = {};
+                    var queryStringDelimiterIndex = url.indexOf(URLBuilder.queryDelimiter);
+                    if (queryStringDelimiterIndex < 0) {
+                        this.baseUrl = url;
+                    }
+                    else {
+                        this.baseUrl = url.substring(0, queryStringDelimiterIndex);
+                        var queryString = url.substring(queryStringDelimiterIndex + URLBuilder.queryDelimiter.length);
+                        var splitParameters = queryString.split(URLBuilder.parameterDelimiter);
+                        for (var _i = 0, splitParameters_1 = splitParameters; _i < splitParameters_1.length; _i++) {
+                            var parameter = splitParameters_1[_i];
+                            var keyValue = parameter.split(URLBuilder.keyValueDelimiter);
+                            if (keyValue.length === 2) {
+                                var key = decodeURIComponent(keyValue[0]);
+                                var value = decodeURIComponent(keyValue[1]);
+                                this.queryParameters[key] = value;
+                            }
+                            else {
+                                console.log("Unable to parse query string parameter '" + parameter + "'.");
+                            }
+                        }
+                    }
+                }
+                URLBuilder.prototype.setQueryParameter = function (name, value) {
+                    if (value === null) {
+                        delete this.queryParameters[name];
+                    }
+                    else {
+                        this.queryParameters[name] = value;
+                    }
+                };
+                URLBuilder.prototype.loopOnParameters = function (prefix, callback) {
+                    for (var _i = 0, _a = Object.keys(this.queryParameters); _i < _a.length; _i++) {
+                        var parameterName = _a[_i];
+                        if (parameterName.indexOf(prefix) === 0 && parameterName.length > prefix.length) {
+                            var parameterValue = this.queryParameters[parameterName];
+                            var shortParameterName = parameterName.substring(prefix.length);
+                            callback(shortParameterName, parameterValue);
+                        }
+                    }
+                };
+                URLBuilder.prototype.buildUrl = function () {
+                    var parameters = [];
+                    for (var _i = 0, _a = Object.keys(this.queryParameters); _i < _a.length; _i++) {
+                        var parameterName = _a[_i];
+                        var parameterValue = this.queryParameters[parameterName];
+                        var encodedName = encodeURIComponent(parameterName);
+                        var encodedValue = encodeURIComponent(parameterValue);
+                        parameters.push(encodedName + URLBuilder.keyValueDelimiter + encodedValue);
+                    }
+                    var queryString = parameters.join(URLBuilder.parameterDelimiter);
+                    if (queryString) {
+                        return this.baseUrl + URLBuilder.queryDelimiter + queryString;
+                    }
+                    else {
+                        return this.baseUrl;
+                    }
+                };
+                URLBuilder.queryDelimiter = "?";
+                URLBuilder.parameterDelimiter = "&";
+                URLBuilder.keyValueDelimiter = "=";
+                return URLBuilder;
+            }());
+            function buildPrefix() {
+                var prefixes = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    prefixes[_i] = arguments[_i];
+                }
+                return prefixes.join(":") + ":";
+            }
+            function updateUrl(newUrl) {
+                window.history.replaceState("", "", newUrl);
+            }
+            function loopOnParameters(prefix, callback) {
+                var urlBuilder = new URLBuilder(window.location.href);
+                var fullPrefix = buildPrefix(PARAMETERS_PREFIX, prefix);
+                urlBuilder.loopOnParameters(fullPrefix, callback);
+            }
+            URL.loopOnParameters = loopOnParameters;
+            function setQueryParameter(prefix, name, value) {
+                var urlBuilder = new URLBuilder(window.location.href);
+                var fullPrefix = buildPrefix(PARAMETERS_PREFIX, prefix);
+                urlBuilder.setQueryParameter(fullPrefix + name, value);
+                updateUrl(urlBuilder.buildUrl());
+            }
+            URL.setQueryParameter = setQueryParameter;
+            function removeQueryParameter(prefix, name) {
+                var urlBuilder = new URLBuilder(window.location.href);
+                var fullPrefix = buildPrefix(PARAMETERS_PREFIX, prefix);
+                urlBuilder.setQueryParameter(fullPrefix + name, null);
+                updateUrl(urlBuilder.buildUrl());
+            }
+            URL.removeQueryParameter = removeQueryParameter;
+        })(URL = Helpers.URL || (Helpers.URL = {}));
+        var Events;
+        (function (Events) {
+            function callAfterDOMLoaded(callback) {
+                if (document.readyState === "loading") { // Loading hasn't finished yet
+                    document.addEventListener("DOMContentLoaded", callback);
+                }
+                else { // `DOMContentLoaded` has already fired
+                    callback();
+                }
+            }
+            Events.callAfterDOMLoaded = callAfterDOMLoaded;
+        })(Events = Helpers.Events || (Helpers.Events = {}));
+    })(Helpers = Page.Helpers || (Page.Helpers = {}));
+})(Page || (Page = {}));
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+var Page;
+(function (Page) {
+    var Controls;
+    (function (Controls) {
+        function getElementBySelector(selector) {
+            var elt = document.querySelector(selector);
+            if (!elt) {
+                console.error("Cannot find control '" + selector + "'.");
+            }
+            return elt;
+        }
+        function setVisibility(id, visible) {
+            var control = getElementBySelector("div#control-" + id);
+            if (control) {
+                control.style.display = visible ? "" : "none";
+            }
+        }
+        Controls.setVisibility = setVisibility;
+    })(Controls = Page.Controls || (Page.Controls = {}));
+})(Page || (Page = {}));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+(function (Page) {
+    var Sections;
+    (function (Sections) {
+        function getElementBySelector(selector) {
+            var elt = document.querySelector(selector);
+            if (!elt) {
+                console.error("Cannot find section '" + selector + "'.");
+            }
+            return elt;
+        }
+        function reevaluateSeparatorsVisibility(controlsBlockElement) {
+            function isHr(element) {
+                return element.tagName.toLowerCase() === "hr";
+            }
+            function isVisible(element) {
+                return element.style.display !== "none";
+            }
+            var sectionsOrHr = controlsBlockElement.querySelectorAll("section, hr");
+            //remove duplicate HRs
+            var lastWasHr = false;
+            for (var i = 0; i < sectionsOrHr.length; i++) {
+                if (isHr(sectionsOrHr[i])) {
+                    sectionsOrHr[i].style.display = lastWasHr ? "none" : "";
+                    lastWasHr = true;
+                }
+                else if (isVisible(sectionsOrHr[i])) {
+                    lastWasHr = false;
+                }
+            }
+            // remove leading HRs
+            for (var i = 0; i < sectionsOrHr.length; i++) {
+                if (isHr(sectionsOrHr[i])) {
+                    sectionsOrHr[i].style.display = "none";
+                }
+                else if (isVisible(sectionsOrHr[i])) {
+                    break;
+                }
+            }
+            // remove trailing HRs
+            for (var i = sectionsOrHr.length - 1; i >= 0; i--) {
+                if (isHr(sectionsOrHr[i])) {
+                    sectionsOrHr[i].style.display = "none";
+                }
+                else if (isVisible(sectionsOrHr[i])) {
+                    break;
+                }
+            }
+        }
+        function setVisibility(id, visible) {
+            var section = getElementBySelector("section#section-" + id);
+            if (section) {
+                section.style.display = visible ? "" : "none";
+                reevaluateSeparatorsVisibility(section.parentElement);
+            }
+        }
+        Sections.setVisibility = setVisibility;
+    })(Sections = Page.Sections || (Page.Sections = {}));
+})(Page || (Page = {}));
+
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+var Page;
+(function (Page) {
+    var Tabs;
+    (function (Tabs_1) {
+        var Tabs = /** @class */ (function () {
+            function Tabs(container) {
+                var _this = this;
+                this.observers = [];
+                this.id = Tabs.computeShortId(container.id);
+                this.inputElements = [];
+                var inputElements = container.querySelectorAll("input");
+                for (var i = 0; i < inputElements.length; i++) {
+                    this.inputElements.push(inputElements[i]);
+                    inputElements[i].addEventListener("change", function (event) {
+                        event.stopPropagation();
+                        _this.reloadValues();
+                        Storage.storeState(_this);
+                        _this.callObservers();
+                    }, false);
+                }
+                this.reloadValues();
+            }
+            Tabs.computeShortId = function (fullId) {
+                if (fullId.lastIndexOf(Tabs.ID_SUFFIX) != fullId.length - Tabs.ID_SUFFIX.length) {
+                    throw new Error("Invalid tabs container id: '" + fullId + "'.");
+                }
+                return fullId.substring(0, fullId.length - Tabs.ID_SUFFIX.length);
+            };
+            Object.defineProperty(Tabs.prototype, "values", {
+                get: function () {
+                    return this._values;
+                },
+                set: function (newValues) {
+                    for (var _i = 0, _a = this.inputElements; _i < _a.length; _i++) {
+                        var inputElement = _a[_i];
+                        var isWanted = false;
+                        for (var _b = 0, newValues_1 = newValues; _b < newValues_1.length; _b++) {
+                            var newValue = newValues_1[_b];
+                            if (inputElement.value === newValue) {
+                                isWanted = true;
+                                break;
+                            }
+                        }
+                        inputElement.checked = isWanted;
+                    }
+                    this.reloadValues();
+                    this.callObservers();
+                },
+                enumerable: false,
+                configurable: true
+            });
+            Tabs.prototype.callObservers = function () {
+                for (var _i = 0, _a = this.observers; _i < _a.length; _i++) {
+                    var observer = _a[_i];
+                    observer(this._values);
+                }
+            };
+            Tabs.prototype.reloadValues = function () {
+                var values = [];
+                for (var _i = 0, _a = this.inputElements; _i < _a.length; _i++) {
+                    var inputElement = _a[_i];
+                    if (inputElement.checked) {
+                        values.push(inputElement.value);
+                    }
+                }
+                this._values = values;
+            };
+            Tabs.ID_SUFFIX = "-id";
+            return Tabs;
+        }());
+        var Cache;
+        (function (Cache) {
+            function loadCache() {
+                var result = {};
+                var containerElements = document.querySelectorAll("div.tabs[id]");
+                for (var i = 0; i < containerElements.length; i++) {
+                    var tabs = new Tabs(containerElements[i]);
+                    result[tabs.id] = tabs;
+                }
+                return result;
+            }
+            var tabsCache;
+            function getTabsById(id) {
+                Cache.load();
+                return tabsCache[id] || null;
+            }
+            Cache.getTabsById = getTabsById;
+            function load() {
+                if (typeof tabsCache === "undefined") {
+                    tabsCache = loadCache();
+                }
+            }
+            Cache.load = load;
+        })(Cache || (Cache = {}));
+        var Storage;
+        (function (Storage) {
+            var PREFIX = "tabs";
+            var SEPARATOR = ";";
+            function storeState(tabs) {
+                var valuesList = tabs.values;
+                var values = valuesList.join(SEPARATOR);
+                Page.Helpers.URL.setQueryParameter(PREFIX, tabs.id, values);
+            }
+            Storage.storeState = storeState;
+            function applyStoredState() {
+                Page.Helpers.URL.loopOnParameters(PREFIX, function (controlId, value) {
+                    var values = value.split(SEPARATOR);
+                    var tabs = Cache.getTabsById(controlId);
+                    if (!tabs) {
+                        console.log("Removing invalid query parameter '" + controlId + "=" + value + "'.");
+                        Page.Helpers.URL.removeQueryParameter(PREFIX, controlId);
+                    }
+                    else {
+                        tabs.values = values;
+                    }
+                });
+            }
+            Storage.applyStoredState = applyStoredState;
+        })(Storage || (Storage = {}));
+        Page.Helpers.Events.callAfterDOMLoaded(function () {
+            Cache.load();
+            Storage.applyStoredState();
+        });
+        /**
+         * @return {boolean} Whether or not the observer was added
+         */
+        function addObserver(tabsId, observer) {
+            var tabs = Cache.getTabsById(tabsId);
+            if (tabs) {
+                tabs.observers.push(observer);
+                return true;
+            }
+            return false;
+        }
+        Tabs_1.addObserver = addObserver;
+        function getValues(tabsId) {
+            var tabs = Cache.getTabsById(tabsId);
+            return tabs.values;
+        }
+        Tabs_1.getValues = getValues;
+        function setValues(tabsId, values) {
+            var tabs = Cache.getTabsById(tabsId);
+            tabs.values = values;
+        }
+        Tabs_1.setValues = setValues;
+    })(Tabs = Page.Tabs || (Page.Tabs = {}));
+})(Page || (Page = {}));
+
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+var Page;
+(function (Page) {
+    var Checkbox;
+    (function (Checkbox_1) {
+        var Checkbox = /** @class */ (function () {
+            function Checkbox(element) {
+                var _this = this;
+                this.observers = [];
+                this.id = element.id;
+                this.element = element;
+                this.reloadValue();
+                this.element.addEventListener("change", function () {
+                    _this.reloadValue();
+                    Storage.storeState(_this);
+                    _this.callObservers();
+                });
+            }
+            Object.defineProperty(Checkbox.prototype, "checked", {
+                get: function () {
+                    return this._checked;
+                },
+                set: function (newChecked) {
+                    this.element.checked = newChecked;
+                    this.reloadValue();
+                    this.callObservers();
+                },
+                enumerable: false,
+                configurable: true
+            });
+            Checkbox.prototype.callObservers = function () {
+                for (var _i = 0, _a = this.observers; _i < _a.length; _i++) {
+                    var observer = _a[_i];
+                    observer(this.checked);
+                }
+            };
+            Checkbox.prototype.reloadValue = function () {
+                this._checked = this.element.checked;
+            };
+            return Checkbox;
+        }());
+        var Cache;
+        (function (Cache) {
+            function loadCache() {
+                var result = {};
+                var selector = "div.checkbox > input[type=checkbox][id]";
+                var elements = document.querySelectorAll(selector);
+                for (var i = 0; i < elements.length; i++) {
+                    var checkbox = new Checkbox(elements[i]);
+                    result[checkbox.id] = checkbox;
+                }
+                return result;
+            }
+            var checkboxesCache;
+            function getCheckboxById(id) {
+                Cache.load();
+                return checkboxesCache[id] || null;
+            }
+            Cache.getCheckboxById = getCheckboxById;
+            function load() {
+                if (typeof checkboxesCache === "undefined") {
+                    checkboxesCache = loadCache();
+                }
+            }
+            Cache.load = load;
+        })(Cache || (Cache = {}));
+        var Storage;
+        (function (Storage) {
+            var PREFIX = "checkbox";
+            var CHECKED = "true";
+            var UNCHECKED = "false";
+            function storeState(checkbox) {
+                var stateAsString = checkbox.checked ? CHECKED : UNCHECKED;
+                Page.Helpers.URL.setQueryParameter(PREFIX, checkbox.id, stateAsString);
+            }
+            Storage.storeState = storeState;
+            function applyStoredState() {
+                Page.Helpers.URL.loopOnParameters(PREFIX, function (checkboxId, value) {
+                    var checkbox = Cache.getCheckboxById(checkboxId);
+                    if (!checkbox || (value !== CHECKED && value !== UNCHECKED)) {
+                        console.log("Removing invalid query parameter '" + checkboxId + "=" + value + "'.");
+                        Page.Helpers.URL.removeQueryParameter(PREFIX, checkboxId);
+                    }
+                    else {
+                        checkbox.checked = (value === CHECKED);
+                    }
+                });
+            }
+            Storage.applyStoredState = applyStoredState;
+        })(Storage || (Storage = {}));
+        Page.Helpers.Events.callAfterDOMLoaded(function () {
+            Cache.load();
+            Storage.applyStoredState();
+        });
+        /**
+         * @return {boolean} Whether or not the observer was added
+         */
+        function addObserver(checkboxId, observer) {
+            var checkbox = Cache.getCheckboxById(checkboxId);
+            if (checkbox) {
+                checkbox.observers.push(observer);
+                return true;
+            }
+            return false;
+        }
+        Checkbox_1.addObserver = addObserver;
+        function setChecked(checkboxId, value) {
+            var checkbox = Cache.getCheckboxById(checkboxId);
+            if (checkbox) {
+                checkbox.checked = value;
+            }
+        }
+        Checkbox_1.setChecked = setChecked;
+        function isChecked(checkboxId) {
+            var checkbox = Cache.getCheckboxById(checkboxId);
+            if (checkbox) {
+                return checkbox.checked;
+            }
+            return false;
+        }
+        Checkbox_1.isChecked = isChecked;
+    })(Checkbox = Page.Checkbox || (Page.Checkbox = {}));
+})(Page || (Page = {}));
+
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+var Page;
+(function (Page) {
+    var Range;
+    (function (Range_1) {
+        var Range = /** @class */ (function () {
+            function Range(container) {
+                var _this = this;
+                this.onInputObservers = [];
+                this.onChangeObservers = [];
+                this.inputElement = container.querySelector("input[type='range']");
+                this.progressLeftElement = container.querySelector(".range-progress-left");
+                this.tooltipElement = container.querySelector("output.range-tooltip");
+                this.id = this.inputElement.id;
+                this.inputElement.addEventListener("input", function (event) {
+                    event.stopPropagation();
+                    _this.reloadValue();
+                    for (var _i = 0, _a = _this.onInputObservers; _i < _a.length; _i++) {
+                        var observer = _a[_i];
+                        observer(_this.value);
+                    }
+                });
+                this.inputElement.addEventListener("change", function (event) {
+                    event.stopPropagation();
+                    _this.reloadValue();
+                    Storage.storeState(_this);
+                    for (var _i = 0, _a = _this.onChangeObservers; _i < _a.length; _i++) {
+                        var observer = _a[_i];
+                        observer(_this.value);
+                    }
+                });
+                this.reloadValue();
+            }
+            Object.defineProperty(Range.prototype, "value", {
+                get: function () {
+                    return this._value;
+                },
+                set: function (newValue) {
+                    this.inputElement.value = "" + newValue;
+                    this.reloadValue();
+                    this.callObservers();
+                },
+                enumerable: false,
+                configurable: true
+            });
+            Range.prototype.callObservers = function () {
+                for (var _i = 0, _a = this.onChangeObservers; _i < _a.length; _i++) {
+                    var observer = _a[_i];
+                    observer(this.value);
+                }
+            };
+            Range.prototype.updateAppearance = function () {
+                var currentLength = +this.inputElement.value - +this.inputElement.min;
+                var totalLength = +this.inputElement.max - +this.inputElement.min;
+                var progression = currentLength / totalLength;
+                progression = Math.max(0, Math.min(1, progression));
+                this.progressLeftElement.style.width = (100 * progression) + "%";
+                this.tooltipElement.textContent = this.inputElement.value;
+            };
+            Range.prototype.reloadValue = function () {
+                this._value = +this.inputElement.value;
+                this.updateAppearance();
+            };
+            return Range;
+        }());
+        var Cache;
+        (function (Cache) {
+            function loadCache() {
+                var result = {};
+                var selector = ".range-container > input[type='range']";
+                var rangeElements = document.querySelectorAll(selector);
+                for (var i = 0; i < rangeElements.length; i++) {
+                    var container = rangeElements[i].parentElement;
+                    var id = rangeElements[i].id;
+                    result[id] = new Range(container);
+                }
+                return result;
+            }
+            var rangesCache;
+            function getRangeById(id) {
+                Cache.load();
+                return rangesCache[id] || null;
+            }
+            Cache.getRangeById = getRangeById;
+            function load() {
+                if (typeof rangesCache === "undefined") {
+                    rangesCache = loadCache();
+                }
+            }
+            Cache.load = load;
+        })(Cache || (Cache = {}));
+        var Storage;
+        (function (Storage) {
+            var PREFIX = "range";
+            function storeState(range) {
+                var valueAsString = "" + range.value;
+                Page.Helpers.URL.setQueryParameter(PREFIX, range.id, valueAsString);
+            }
+            Storage.storeState = storeState;
+            function applyStoredState() {
+                Page.Helpers.URL.loopOnParameters(PREFIX, function (controlId, value) {
+                    var range = Cache.getRangeById(controlId);
+                    if (!range) {
+                        console.log("Removing invalid query parameter '" + controlId + "=" + value + "'.");
+                        Page.Helpers.URL.removeQueryParameter(PREFIX, controlId);
+                    }
+                    else {
+                        range.value = +value;
+                    }
+                });
+            }
+            Storage.applyStoredState = applyStoredState;
+        })(Storage || (Storage = {}));
+        Page.Helpers.Events.callAfterDOMLoaded(function () {
+            Cache.load();
+            Storage.applyStoredState();
+        });
+        var isIE11 = !!window.MSInputMethodContext && !!document["documentMode"];
+        /**
+         * Callback will be called every time the value changes.
+         * @return {boolean} Whether or not the observer was added
+         */
+        function addObserver(rangeId, observer) {
+            var range = Cache.getRangeById(rangeId);
+            if (range) {
+                if (isIE11) { // bug in IE 11, input event is never fired
+                    range.onChangeObservers.push(observer);
+                }
+                else {
+                    range.onInputObservers.push(observer);
+                }
+                return true;
+            }
+            return false;
+        }
+        Range_1.addObserver = addObserver;
+        /**
+         * Callback will be called only when the value stops changing.
+         * @return {boolean} Whether or not the observer was added
+         */
+        function addLazyObserver(rangeId, observer) {
+            var range = Cache.getRangeById(rangeId);
+            if (range) {
+                range.onChangeObservers.push(observer);
+                return true;
+            }
+            return false;
+        }
+        Range_1.addLazyObserver = addLazyObserver;
+        function getValue(rangeId) {
+            var range = Cache.getRangeById(rangeId);
+            if (!range) {
+                return null;
+            }
+            return range.value;
+        }
+        Range_1.getValue = getValue;
+        function setValue(rangeId, value) {
+            var range = Cache.getRangeById(rangeId);
+            if (range) {
+                range.value = value;
+            }
+        }
+        Range_1.setValue = setValue;
+    })(Range = Page.Range || (Page.Range = {}));
+})(Page || (Page = {}));
+
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+var Page;
+(function (Page) {
     var Canvas;
     (function (Canvas) {
         function getElementBySelector(selector) {
@@ -75,12 +719,12 @@ var Page;
                 document.body.style.overflow = value ? "hidden" : "auto";
             }
             if (fullscreenCheckbox) {
-                window.addEventListener("load", function () {
+                Page.Helpers.Events.callAfterDOMLoaded(function () {
                     hideOverflow(fullscreenCheckbox.checked);
                     fullscreenCheckbox.addEventListener("change", function () {
                         hideOverflow(fullscreenCheckbox.checked);
                     });
-                }, false);
+                });
                 if (sidePaneCheckbox) {
                     fullscreenCheckbox.addEventListener("change", function () {
                         if (fullscreenCheckbox.checked) {
@@ -126,7 +770,7 @@ var Page;
                 }
             }
         }
-        window.addEventListener("load", updateCanvasSize, false);
+        Page.Helpers.Events.callAfterDOMLoaded(updateCanvasSize);
         fullscreenCheckbox.addEventListener("change", updateCanvasSize, false);
         window.addEventListener("resize", updateCanvasSize, false);
         var fullscreenToggleObservers = [updateCanvasSize];
@@ -355,15 +999,67 @@ var Page;
         var Indicators;
         (function (Indicators) {
             var indicatorSpansCache = {};
+            var suffix = "-indicator-id";
+            function getIndicator(id) {
+                return getElementBySelector("#" + id + suffix);
+            }
+            Indicators.getIndicator = getIndicator;
             function getIndicatorSpan(id) {
                 if (!indicatorSpansCache[id]) { // not yet in cache
-                    var fullId = id + "-indicator-id";
+                    var fullId = id + suffix;
                     indicatorSpansCache[id] = getElementBySelector("#" + fullId + " span");
                 }
                 return indicatorSpansCache[id];
             }
             Indicators.getIndicatorSpan = getIndicatorSpan;
         })(Indicators || (Indicators = {}));
+        var Storage;
+        (function (Storage) {
+            var PREFIX = "canvas";
+            var FULLSCREEN_PARAMETER = "fullscreen";
+            var SIDE_PANE_PARAMETER = "sidepane";
+            var TRUE = "true";
+            var FALSE = "false";
+            function updateBooleanParameter(name, checked) {
+                var value = checked ? TRUE : FALSE;
+                Page.Helpers.URL.setQueryParameter(PREFIX, name, value);
+            }
+            function attachStorageEvents() {
+                if (fullscreenCheckbox) {
+                    fullscreenCheckbox.addEventListener("change", function () {
+                        updateBooleanParameter(FULLSCREEN_PARAMETER, fullscreenCheckbox.checked);
+                        Page.Helpers.URL.removeQueryParameter(PREFIX, SIDE_PANE_PARAMETER);
+                    });
+                }
+                if (sidePaneCheckbox) {
+                    sidePaneCheckbox.addEventListener("change", function () {
+                        updateBooleanParameter(SIDE_PANE_PARAMETER, sidePaneCheckbox.checked);
+                    });
+                }
+            }
+            Storage.attachStorageEvents = attachStorageEvents;
+            function applyStoredState() {
+                Page.Helpers.URL.loopOnParameters(PREFIX, function (name, value) {
+                    if (name === FULLSCREEN_PARAMETER && (value === TRUE || value === FALSE)) {
+                        if (fullscreenCheckbox) {
+                            fullscreenCheckbox.checked = (value === TRUE);
+                        }
+                    }
+                    else if (name === SIDE_PANE_PARAMETER && (value === TRUE || value === FALSE)) {
+                        if (sidePaneCheckbox) {
+                            sidePaneCheckbox.checked = (value === TRUE);
+                        }
+                    }
+                    else {
+                        console.log("Removing invalid query parameter '" + name + "=" + value + "'.");
+                        Page.Helpers.URL.removeQueryParameter(PREFIX, name);
+                    }
+                });
+            }
+            Storage.applyStoredState = applyStoredState;
+        })(Storage || (Storage = {}));
+        Storage.applyStoredState();
+        Storage.attachStorageEvents();
         Canvas.Observers = Object.freeze({
             canvasResize: canvasResizeObservers,
             fullscreenToggle: fullscreenToggleObservers,
@@ -411,9 +1107,16 @@ var Page;
             }
         }
         Canvas.setIndicatorText = setIndicatorText;
+        function setIndicatorVisibility(id, visible) {
+            var indicator = Indicators.getIndicator(id);
+            if (indicator) {
+                indicator.style.display = visible ? "" : "none";
+            }
+        }
+        Canvas.setIndicatorVisibility = setIndicatorVisibility;
         function setIndicatorsVisibility(visible) {
             var indicators = document.getElementById("indicators");
-            indicators.style.display = visible ? "block" : "none";
+            indicators.style.display = visible ? "" : "none";
         }
         Canvas.setIndicatorsVisibility = setIndicatorsVisibility;
         function setMaxSize(newMaxWidth, newMaxHeight) {
@@ -423,7 +1126,7 @@ var Page;
         }
         Canvas.setMaxSize = setMaxSize;
         function setResizable(resizable) {
-            buttonsColumn.style.display = resizable ? "block" : "none";
+            buttonsColumn.style.display = resizable ? "" : "none";
         }
         Canvas.setResizable = setResizable;
         function setLoaderText(text) {
@@ -456,238 +1159,6 @@ var Page;
         }
         Canvas.toggleFullscreen = toggleFullscreen;
     })(Canvas = Page.Canvas || (Page.Canvas = {}));
-})(Page || (Page = {}));
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-var Page;
-(function (Page) {
-    var Controls;
-    (function (Controls) {
-        function getElementBySelector(selector) {
-            var elt = document.querySelector(selector);
-            if (!elt) {
-                console.error("Cannot find control '" + selector + "'.");
-            }
-            return elt;
-        }
-        function setVisibility(id, visible) {
-            var control = getElementBySelector("div#control-" + id);
-            if (control) {
-                control.style.display = visible ? "" : "none";
-            }
-        }
-        Controls.setVisibility = setVisibility;
-    })(Controls = Page.Controls || (Page.Controls = {}));
-})(Page || (Page = {}));
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-var Page;
-(function (Page) {
-    var Tabs;
-    (function (Tabs) {
-        function getTabsById(id) {
-            var selector = "div.tabs[id=" + id + "-id]";
-            var elt = document.querySelector(selector);
-            if (!elt) {
-                console.error("Cannot find tabs '" + selector + "'.");
-            }
-            return elt;
-        }
-        /**
-         * @param {Object} tabsElt Node tab element
-         */
-        function getSelectedValues(tabsElt) {
-            var values = [];
-            var inputs = tabsElt.querySelectorAll("input");
-            for (var i = 0; i < inputs.length; i++) {
-                var input = inputs[i];
-                if (input.checked) {
-                    values.push(input.value);
-                }
-            }
-            return values;
-        }
-        /**
-         * @return {boolean} Whether or not the observer was added
-         */
-        function addObserver(tabsId, observer) {
-            var divWrapper = getTabsById(tabsId);
-            if (divWrapper) {
-                var inputs = divWrapper.querySelectorAll("input");
-                Array.prototype.forEach.call(inputs, function (input) {
-                    input.addEventListener("change", function (event) {
-                        event.stopPropagation();
-                        observer(getSelectedValues(divWrapper));
-                    }, false);
-                });
-                return true;
-            }
-            return false;
-        }
-        Tabs.addObserver = addObserver;
-        function getValues(tabsId) {
-            var divWrapper = getTabsById(tabsId);
-            if (!divWrapper) {
-                return [];
-            }
-            return getSelectedValues(divWrapper);
-        }
-        Tabs.getValues = getValues;
-        function setValues(tabsId, values) {
-            var divWrapper = getTabsById(tabsId);
-            var inputs = divWrapper.querySelectorAll("input");
-            for (var i = 0; i < inputs.length; i++) {
-                inputs[i].checked = false;
-            }
-            for (var _i = 0, values_1 = values; _i < values_1.length; _i++) {
-                var value = values_1[_i];
-                var id = tabsId + "-" + value + "-id";
-                var inputElement = divWrapper.querySelector("input[id=" + id + "]");
-                inputElement.checked = true;
-            }
-        }
-        Tabs.setValues = setValues;
-    })(Tabs = Page.Tabs || (Page.Tabs = {}));
-})(Page || (Page = {}));
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-var Page;
-(function (Page) {
-    var Checkbox;
-    (function (Checkbox) {
-        function getCheckboxFromId(id) {
-            var selector = "input[type=checkbox][id=" + id + "]";
-            var elt = document.querySelector(selector);
-            if (!elt) {
-                console.error("Cannot find checkbox '" + selector + "'.");
-            }
-            return elt;
-        }
-        /**
-         * @return {boolean} Whether or not the observer was added
-         */
-        function addObserver(checkboxId, observer) {
-            var elt = getCheckboxFromId(checkboxId);
-            if (elt) {
-                elt.addEventListener("change", function (event) {
-                    event.stopPropagation();
-                    observer(elt.checked);
-                }, false);
-                return true;
-            }
-            return false;
-        }
-        Checkbox.addObserver = addObserver;
-        function setChecked(checkboxId, value) {
-            var elt = getCheckboxFromId(checkboxId);
-            if (elt) {
-                elt.checked = value ? true : false;
-            }
-        }
-        Checkbox.setChecked = setChecked;
-        function isChecked(checkboxId) {
-            var elt = getCheckboxFromId(checkboxId);
-            return !!elt && elt.checked;
-        }
-        Checkbox.isChecked = isChecked;
-    })(Checkbox = Page.Checkbox || (Page.Checkbox = {}));
-})(Page || (Page = {}));
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-var Page;
-(function (Page) {
-    var Range;
-    (function (Range) {
-        function isRangeElement(elt) {
-            return elt.type && elt.type.toLowerCase() === "range";
-        }
-        function getRangeById(id) {
-            var selector = "input[type=range][id=" + id + "]";
-            var elt = document.querySelector(selector);
-            if (!elt) {
-                console.error("Cannot find range '" + selector + "'.");
-            }
-            return elt;
-        }
-        var thumbSize = 16;
-        function updateTooltipPosition(range, tooltip) {
-            tooltip.textContent = range.value;
-            var bodyRect = document.body.getBoundingClientRect();
-            var rangeRect = range.getBoundingClientRect();
-            var tooltipRect = tooltip.getBoundingClientRect();
-            var percentage = (+range.value - +range.min) / (+range.max - +range.min);
-            var top = (rangeRect.top - tooltipRect.height - bodyRect.top) - 4;
-            var middle = percentage * (rangeRect.width - thumbSize) +
-                (rangeRect.left + 0.5 * thumbSize) - bodyRect.left;
-            tooltip.style.top = top + "px";
-            tooltip.style.left = (middle - 0.5 * tooltipRect.width) + "px";
-        }
-        window.addEventListener("load", function () {
-            var tooltips = document.querySelectorAll(".tooltip");
-            Array.prototype.forEach.call(tooltips, function (tooltip) {
-                var range = tooltip.previousElementSibling;
-                if (isRangeElement(range)) {
-                    range.parentNode.addEventListener("mouseenter", function () {
-                        updateTooltipPosition(range, tooltip);
-                    }, false);
-                    range.addEventListener("input", function () {
-                        updateTooltipPosition(range, tooltip);
-                    }, false);
-                }
-            });
-        });
-        /**
-         * @return {boolean} Whether or not the observer was added
-         */
-        function addObserverInternal(rangeId, observer, eventName) {
-            var elt = getRangeById(rangeId);
-            if (elt) {
-                elt.addEventListener(eventName, function (event) {
-                    event.stopPropagation();
-                    observer(+elt.value);
-                }, false);
-                return true;
-            }
-            return false;
-        }
-        var isIE11 = !!window.MSInputMethodContext && !!document["documentMode"];
-        /**
-         * Callback will be called every time the value changes.
-         * @return {boolean} Whether or not the observer was added
-         */
-        function addObserver(rangeId, observer) {
-            if (isIE11) { // bug in IE 11, input event is never fired
-                return addObserverInternal(rangeId, observer, "change");
-            }
-            else {
-                return addObserverInternal(rangeId, observer, "input");
-            }
-        }
-        Range.addObserver = addObserver;
-        /**
-         * Callback will be called only when the value stops changing.
-         * @return {boolean} Whether or not the observer was added
-         */
-        function addLazyObserver(rangeId, observer) {
-            return addObserverInternal(rangeId, observer, "change");
-        }
-        Range.addLazyObserver = addLazyObserver;
-        function getValue(rangeId) {
-            var elt = getRangeById(rangeId);
-            if (!elt) {
-                return null;
-            }
-            return +elt.value;
-        }
-        Range.getValue = getValue;
-        function setValue(rangeId, value) {
-            var elt = getRangeById(rangeId);
-            if (elt) {
-                elt.value = "" + value;
-            }
-        }
-        Range.setValue = setValue;
-    })(Range = Page.Range || (Page.Range = {}));
 })(Page || (Page = {}));
 
 Page.Canvas.setMaxSize(512,512);
