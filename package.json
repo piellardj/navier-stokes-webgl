@@ -3,6 +3,7 @@
   "homepage": "https://piellardj.github.io/navier-stokes-webgl",
   "description": "Stable fluid simulation running on GPU",
   "scripts": {
+    "pre-commit": "npm run rebuild",
     "build-page": "ts-node-script src/generate-page.ts",
     "build": "npm run build-page && npm run webpack",
     "clean": "shx rm -rf docs/* **/*generated.*",
