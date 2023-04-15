@@ -10,6 +10,10 @@ const data = {
         "This is an implementation of the Stable Fluid described by J. Stam."
     ],
     githubProjectName: "navier-stokes-webgl",
+    readme: {
+        filepath: path.join(__dirname, "..", "README.md"),
+        branchName: "master"
+    },
     additionalLinks: [],
     scriptFiles: [
         "script/main.min.js"
