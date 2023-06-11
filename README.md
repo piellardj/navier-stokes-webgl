@@ -5,6 +5,8 @@ Live version [here](https://piellardj.github.io/navier-stokes-webgl).
 
 This is an implementation of the Stable Fluid described by Jos Stam.
 
+[![Donate](https://raw.githubusercontent.com/piellardj/piellardj.github.io/master/images/readme/donate-paypal.svg)](https://www.paypal.com/donate/?hosted_button_id=AF7H7GEJTL95E)
+
 # Simulation
 
 The simulation is implemented on GPU with the method provided in GPU Gems.
